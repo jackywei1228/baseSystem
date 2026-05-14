@@ -1,0 +1,3 @@
+[submodule "ruoyi-ui"]
+	path = ruoyi-ui
+	url = git@github.com:jackywei1228/RuoYi-Vue3.git

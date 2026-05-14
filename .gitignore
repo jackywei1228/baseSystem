@@ -45,3 +45,6 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
+./logs
+dockerEnvironment/mysql/data/
+dockerEnvironment/redis/data/

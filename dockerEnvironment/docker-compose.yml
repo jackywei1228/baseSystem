@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # MySQL 8.0
+  mysql:
+    image: mysql:8.0
+    container_name: ruoyi-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: ry-vue
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ../sql:/docker-entrypoint-initdb.d
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=caching_sha2_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Redis 7
+  redis:
+    image: redis:7-alpine
+    container_name: ruoyi-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务 (RuoYi Admin)
+  ruoyi-server:
+    image: openjdk:17-jdk-slim
+    container_name: ruoyi-server
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      # 覆盖数据库和Redis连接地址，指向Docker服务名
+      SPRING_DATASOURCE_DRUID_MASTER_URL: "jdbc:mysql://mysql:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8"
+      SPRING_DATASOURCE_DRUID_MASTER_USERNAME: root
+      SPRING_DATASOURCE_DRUID_MASTER_PASSWORD: password
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../ruoyi-admin/target/ruoyi-admin.jar:/app.jar
+      - ./logs:/home/ruoyi/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: java ${JAVA_OPTS} -Djava.security.egd=file:/dev/./urandom -jar /app.jar
+
+  # 前端 (Nginx)
+  ruoyi-ui:
+    image: nginx:alpine
+    container_name: ruoyi-ui
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "80:80"
+    volumes:
+      - ../ruoyi-ui/dist:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - ruoyi-server

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RuoYi-Vue v3.9.2 — a full-stack admin management system with Spring Boot 4.x backend (Java 17+) and Vue 2 + Element UI frontend. This is the master branch using Spring Boot 4.x; separate branches exist for Spring Boot 2.x and 3.x.
+RuoYi-Vue v3.9.2 — a full-stack admin management system with Spring Boot 4.x backend (Java 17+) and Vue 3 + Element Plus frontend. This is the master branch using Spring Boot 4.x; separate branches exist for Spring Boot 2.x and 3.x.
+
+The frontend (`ruoyi-ui/`) is a git submodule pointing to [RuoYi-Vue3](https://github.com/yangzongzhuan/RuoYi-Vue3), using Vue 3 + Vite + Element Plus + Pinia.
 
 ## Build & Run Commands
 
@@ -24,12 +26,12 @@ java -jar ruoyi-admin/target/ruoyi-admin.jar
 ./ry.sh start|stop|restart|status
 ```
 
-### Frontend (ruoyi-ui/)
+### Frontend (ruoyi-ui/ — git submodule, Vue 3 + Vite)
 ```bash
 cd ruoyi-ui
 npm install
-npm run dev          # Dev server on port 80, proxies /dev-api → localhost:8080
-npm run build:prod   # Production build → dist/
+npm run dev     # Vite dev server on port 1024, proxies /dev-api → localhost:8080
+npm run build   # Production build → dist/
 ```
 
 ### Dev Environment (Docker)
@@ -77,7 +79,7 @@ ruoyi-admin (entry point, controllers)
 - **ruoyi-common**: Shared utilities and base classes. `BaseController` (pagination via `startPage()`), `BaseEntity` (audit fields), `AjaxResult` (unified response), `TableDataInfo` (paged response).
 - **ruoyi-quartz**: Quartz-based job scheduling. Jobs extend `AbstractQuartzJob`, registered via `sys_job` table.
 - **ruoyi-generator**: Auto-generates CRUD code (Java controller/service/mapper, Vue pages, SQL) from database tables using Velocity templates in `resources/vm/`. Config in `generator.yml`.
-- **ruoyi-ui**: Vue 2 + Element UI SPA. Router in `src/router/`, Vuex store in `src/store/`, API calls in `src/api/`, views in `src/views/`.
+- **ruoyi-ui**: Vue 3 + Vite + Element Plus + Pinia SPA. Git submodule from RuoYi-Vue3. Router in `src/router/`, Pinia store in `src/store/`, API calls in `src/api/`, views in `src/views/`.
 
 ### Backend Request Flow
 ```
@@ -116,7 +118,7 @@ HTTP Request → Spring Security filter chain (JWT auth)
 - `application-druid.yml` — Database connection (MySQL + Druid pool). JDBC URL must include `useSSL=false&allowPublicKeyRetrieval=true` for MySQL 8.0 compatibility.
 - `generator.yml` — Code generator settings
 - `mybatis/mybatis-config.xml` — MyBatis global settings
-- `ruoyi-ui/vue.config.js` — Frontend build and dev server proxy config
+- `ruoyi-ui/vite.config.js` — Frontend Vite build and dev server proxy config (port 1024)
 - `ruoyi-admin/src/main/resources/logback.xml` — Log output path (currently `./logs`)
 - `dockerEnvironment/docker-compose.yml` — Docker services (MySQL, Redis, backend, frontend nginx)
 - `dockerEnvironment/mysql/conf/my.cnf` — MySQL character set config (utf8mb4)
@@ -128,3 +130,4 @@ The following files have been modified from the original repo for local developm
 
 - `ruoyi-admin/src/main/resources/logback.xml` — Log path changed from `/home/ruoyi/logs` to `./logs` (avoids creating system directories)
 - `ruoyi-admin/src/main/resources/application-druid.yml` — JDBC URL updated with `useSSL=false&allowPublicKeyRetrieval=true` for Docker MySQL 8.0
+- `ruoyi-ui/` — Replaced original Vue 2 frontend with RuoYi-Vue3 (Vue 3) as git submodule. `vite.config.js` port changed from 80 to 1024.
